@@ -14,6 +14,26 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
+
+//  "temple", "lake", "mountain", "cultural_site", "adventure_spot", "hidden_gem", "hotel", "waterfall"
+
+
+const templeIcon = new L.Icon({ iconUrl: 'ai itenary.png', iconSize: [25, 41] });
+const hotelIcon = new L.Icon({ iconUrl: 'globe.svg', iconSize: [25, 41] });
+const defaultIcon = new L.Icon({ iconUrl: 'ai itenary.png', iconSize: [25, 41] });
+
+const getMarkerIcon = (type) => {
+  debugger;
+  switch(type) {
+    case 'hotel': return hotelIcon;
+    case 'temple': return templeIcon;
+    case "mountain": return hotelIcon;
+    default: return defaultIcon;
+  }
+};
+
+
+
 function Recenter({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap();
   useEffect(() => {
@@ -26,6 +46,7 @@ interface MapViewProps {
   center?: { lat: number; lng: number };
   label?: string;
 }
+
 
 export default function MapView({ center, label,itinerary }: MapViewProps) {
   const defaultCenter: [number, number] = [20, 0];
@@ -53,7 +74,7 @@ export default function MapView({ center, label,itinerary }: MapViewProps) {
         {itinerary && itinerary?.itinerary?.map((activity, i) => {
          return   activity.activities?.map((item,id) => {
             return (
-              <Marker key={id} position={[item.coordinates.lat, item.coordinates.lng]}>
+              <Marker  icon={getMarkerIcon(item.locationType)}  key={id} position={[item.coordinates.lat, item.coordinates.lng]}>
                 <Popup>
                   <strong>{item.location}</strong>
                   <p>{item.description}</p>
@@ -63,14 +84,7 @@ export default function MapView({ center, label,itinerary }: MapViewProps) {
           })
          }
       )}
-        {center && (
-          <>
-            <Recenter lat={center.lat} lng={center.lng} />
-            <Marker position={[center.lat, center.lng]}>
-              {label && <Popup>{label}</Popup>}
-            </Marker>
-          </>
-        )}
+   
       </MapContainer>
     </div>
   );
