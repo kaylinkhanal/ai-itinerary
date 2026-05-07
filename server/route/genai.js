@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router()
 
 const ai = new GoogleGenAI({ 
-  apiKey: "AIzaSyDkXQGqDY8reqny7BV-R9unAuvmqla4h2c"
+  apiKey: "AIzaSyC_KTyzCTU7YAlmuiF5wUUU160qGAW00ZM"
 });
 
 router.post('/generate', async (req, res) => {

@@ -9,6 +9,7 @@ const port = 8000
 connectDb()
 app.use(cors())
 app.use(express.json())
+app.use('/admin', require('./route/admin')) 
 app.use('/', userRouter)
 app.use('/', genAIRouter)
 
