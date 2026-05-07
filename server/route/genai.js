@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router()
 
 const ai = new GoogleGenAI({ 
-  apiKey: "AIzaSyC_KTyzCTU7YAlmuiF5wUUU160qGAW00ZM"
+  apiKey: ""
 });
 
 router.post('/generate', async (req, res) => {
@@ -22,7 +22,6 @@ router.post('/generate', async (req, res) => {
 
 Contextual Awareness: Include 2026-specific local events and seasonal weather advice.
 
---- NEW SCHEMA REQUIREMENTS (CRITICAL) ---
 For every accommodation/hotel suggestion, the JSON output MUST include a valid, high-resolution 'imageUrl' string pointing to an image of the specific hotel property.
 
 Required JSON Schema: 
@@ -36,7 +35,6 @@ Required JSON Schema:
     "description": "string",
     "coordinates": { "lat": "number", "lng": "number" },
     
-    // --- ADD THIS LINE FOR MAIN ACCOMMODATION ---
     "imageUrl": "string" 
   },
   "itinerary": [
