@@ -18,20 +18,44 @@ L.Icon.Default.mergeOptions({
 //  "temple", "lake", "mountain", "cultural_site", "adventure_spot", "hidden_gem", "hotel", "waterfall"
 
 
-const templeIcon = new L.Icon({ iconUrl: 'ai itenary.png', iconSize: [25, 41] });
-const hotelIcon = new L.Icon({ iconUrl: 'globe.svg', iconSize: [25, 41] });
-const defaultIcon = new L.Icon({ iconUrl: 'ai itenary.png', iconSize: [25, 41] });
+const templeIcon = new L.Icon({ iconUrl: 'temple.svg', iconSize: [25, 41] });
+const hotelIcon = new L.Icon({ iconUrl: 'hotel.svg', iconSize: [30, 41] });
+const defaultIcon = new L.Icon({ iconUrl: 'default.svg', iconSize: [25, 41] });
+const mountainIcon = new L.Icon({ iconUrl: 'mountain.svg', iconSize: [25, 41] });
+const parkIcon = new L.Icon({ iconUrl: 'park.svg', iconSize: [25, 41] });
+const waterfallIcon = new L.Icon({ iconUrl: 'waterfall.svg', iconSize: [25, 41] });
+const caveIcon = new L.Icon({ iconUrl: 'cave.svg', iconSize: [25, 41] });
+const lakeIcon = new L.Icon({ iconUrl: 'lake.svg', iconSize: [25, 41] });
+const hikeIcon = new L.Icon({ iconUrl: 'hike.svg', iconSize: [25, 41] });
+const extra_activityIcon = new L.Icon({ iconUrl: 'exercise.svg', iconSize: [25, 41] });
+const riverIcon = new L.Icon({ iconUrl: 'river.svg', iconSize: [25, 41] });
+const national_parkIcon = new L.Icon({ iconUrl: 'national-park.svg', iconSize: [25, 41] });
+const airportIcon = new L.Icon({ iconUrl: 'plane.svg', iconSize: [25, 41] });
+const museumIcon = new L.Icon({ iconUrl: 'museum.svg', iconSize: [25, 41] });
 
 const getMarkerIcon = (type) => {
-  debugger;
-  switch(type) {
-    case 'hotel': return hotelIcon;
-    case 'temple': return templeIcon;
-    case "mountain": return hotelIcon;
-    default: return defaultIcon;
-  }
-};
+  if (!type) return defaultIcon;
+  
+  // Convert to lowercase so "Temple" and "temple" both work
+  const t = type.toLowerCase();
 
+  // Keyword checks
+  if (t.includes("temple") || t.includes("monastery") || t.includes("spiritual")) return templeIcon;
+  if (t.includes("hotel") || t.includes("resort") || t.includes("stay")) return hotelIcon;
+  if (t.includes("mountain") || t.includes("hill") || t.includes("viewpoint")) return mountainIcon;
+  if (t.includes("park") || t.includes("garden")) return parkIcon;
+  if (t.includes("waterfall")) return waterfallIcon;
+  if (t.includes("cave")) return caveIcon;
+  if (t.includes("hike") || t.includes("trek")) return hikeIcon;
+  if (t.includes("lake") || t.includes("beach")) return lakeIcon;
+  if (t.includes("river")) return riverIcon;
+  if (t.includes("museum") || t.includes("cultural")) return museumIcon;
+  if (t.includes("airport") || t.includes("plane")) return airportIcon;
+  if (t.includes("yoga") || t.includes("exercise") || t.includes("activity")) return extra_activityIcon;
+
+  // Fallback if no keywords match
+  return defaultIcon;
+};
 
 
 function Recenter({ lat, lng }: { lat: number; lng: number }) {

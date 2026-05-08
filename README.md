@@ -1,5 +1,4 @@
-# ai-itinerary
-ai itenary system
+Ai iteneray 
 
 ITERNARY-1.0.0
 
