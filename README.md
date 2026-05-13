@@ -12,7 +12,10 @@ ITERNARY-1.0.0
 - [ ] User preference section
 - [x] User- trip (trip budget, and planning)  
 - [x] Booking
-
+- [x] hotel add 
+- [x] admin panel 
+- [x] custom chat history
+- [ ] multiple chat history
 
 
 INTERNARY-2.0.0

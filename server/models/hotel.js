@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const hotelSchema = new mongoose.Schema({
+  adminStaff: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true },
   description: { type: String, required: true },
   coordinates: {
@@ -8,6 +9,13 @@ const hotelSchema = new mongoose.Schema({
     lng: { type: Number, required: true },
   },
   averagePrice: { type: Number, required: true },
+  rooms: [
+    {
+      type: String,
+      enum: ['single', 'double', 'suite'],
+      required: true
+    }
+  ],
   specialOffers: String,
   imageUrl: { type: String, default: 'https://via.placeholder.com/300' }
 });

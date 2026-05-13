@@ -34,7 +34,21 @@ const loginUser=  async (req, res) => {
 }
 
 
+const getAllUsers = async (req, res) => {
+  const users = await User.find();
+  res.send(users);
+}
 
-export  { registerNewUser, loginUser }
+
+
+const getUserDetailsById = async (req, res) => {
+  const user = await User.findById(req.params.id)
+  res.send(user);
+}
+
+
+
+
+export  { registerNewUser, loginUser ,getAllUsers, getUserDetailsById}
 
 
