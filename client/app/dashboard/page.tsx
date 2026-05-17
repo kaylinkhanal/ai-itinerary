@@ -16,9 +16,11 @@ import {
   Sunrise,
   Sunset,
   Sun,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MapPanel from "@/components/MapPanel";
 
 interface Activity {
@@ -142,9 +144,11 @@ const ItineraryView = ({ data }: { data: ItineraryData }) =>{
 }
 const InputDemo = () => {
   const [promptInput, setPromptInput] = useState("");
+  const [chatList, setChatList] = useState([]);
   const [itinerary, setItinerary] = useState<ItineraryData | null>(null);
   const [loading, setLoading] = useState(false);
   const [conversations, setConversations] = useState([])
+  const [selectedChatId, setSelectedChatId] = useState('')
   const [error, setError] = useState("");
     const user = localStorage.getItem("user")
   const handleClick = async () => {
@@ -156,7 +160,7 @@ const InputDemo = () => {
         debugger;
       const { data } = await axios.post("http://localhost:8000/generate", {
         prompt: promptInput,
-        userid: JSON.parse(user)._id
+        conversationId:  selectedChatId
       });
       const parsed: ItineraryData = JSON.parse(data.text);
 
@@ -172,6 +176,35 @@ const InputDemo = () => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handleClick();
   };
+
+  const getAllChatTitles = async() => {
+    const {data}  = await axios.get("http://localhost:8000/chats?userId=" + JSON.parse(user)._id)
+    setChatList(data)
+  }
+
+  const addNewChat = async() => {
+    const {data}  = await axios.post("http://localhost:8000/newchat?userid=" + JSON.parse(user)._id)
+    getAllChatTitles()
+  }
+
+  const deleteConv = async(id) => {
+    const {data}  = await axios.delete("http://localhost:8000/chats/" + id)
+    getAllChatTitles()
+  }
+
+
+  
+
+  const getUserChatByConversation = async() => {
+    const {data}  = await axios.get("http://localhost:8000/chats/" + selectedChatId)
+    setConversations(JSON.stringify(data))
+    console.log(data)
+  }
+
+  useEffect(()=>{
+    getAllChatTitles()
+    getUserChatByConversation()
+  },[selectedChatId])
 
   const userName = JSON.parse(localStorage.getItem("user"))
 
@@ -191,7 +224,15 @@ const InputDemo = () => {
         {userName?.name}
 
         </div>
-        <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">Recent Trips</p>
+        <Button onClick={addNewChat }> <Plus/> Start new chat </Button>
+        {chatList.length> 0 ? chatList.map((item,id)=>{
+          return (
+            <div key={id} onClick={()=> setSelectedChatId(item._id)}  className={item._id===selectedChatId ? "bg-white text-black p-2": "text-white p-2"}>
+              {item.title}
+              <Trash2 onClick={()=> deleteConv(item._id)}/>
+              </div>
+          )
+        }) : "No chats"}
         {itinerary && (
           <div className="rounded-lg bg-gray-800 p-3 cursor-pointer hover:bg-gray-700 transition-colors">
             <p className="text-white   font-medium truncate">{itinerary.destination}</p>
@@ -226,16 +267,24 @@ const InputDemo = () => {
 
           {conversations.length > 0 && (
             <div className="p-4 space-y-3">
-             {conversations.map((conv, i) => (
-                <div key={i} className={`flex items-start gap-3 ${conv.role === "user" ? "justify-end" : ""}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white ${conv.role === "user" ? "bg-blue-500" : "bg-gray-500"}`}>
-                    {conv.role === "user" ? <SendIcon className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+
+              {JSON.parse(conversations).length> 0 && JSON.parse(conversations)?.map((item)=>{
+                return (
+                  <div key={item._id}>
+                    {item.messages.map((conv, i) => (
+                <div key={i} className={`flex items-start gap-3 ${conv.sender === "user" ? "justify-end" : ""}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white ${conv.sender === "user" ? "bg-blue-500" : "bg-gray-500"}`}>
+                    {conv.sender === "user" ? <SendIcon className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
                   </div>
-                  <p className={`px-3 py-2 rounded-lg ${conv.role === "user" ? "bg-blue-100 text-blue-800" : "text-gray-800"}`}>
-                    {conv?.role === "user" ?  conv?.text : <ItineraryView data={conv.text} />}
+                  <p className={`px-3 py-2 rounded-lg ${conv.sender === "user" ? "bg-blue-100 text-blue-800" : "text-gray-800"}`}>
+                    {conv?.sender === "user" ?  conv?.userPrompt : <ItineraryView data={conv.userPrompt} />}
                   </p>
                 </div>
-              ))}
+              ))} 
+                  </div>
+                )
+              })}
+             {/**/}
             </div>
           )}
  

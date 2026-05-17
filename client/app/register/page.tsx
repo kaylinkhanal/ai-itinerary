@@ -15,17 +15,21 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [avatar, setAvatar] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      await axios.post("http://localhost:8000/register", {
-        name,
-        phoneNumber,
-        password,
-      });
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("phoneNumber", phoneNumber);
+      formData.append("password", password);
+      if (avatar) {
+        formData.append("avatar", avatar);
+      }
+      await axios.post("http://localhost:8000/register", formData);
       router.push("/login");
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
@@ -92,6 +96,8 @@ export default function RegisterPage() {
               {error}
             </p>
           )}
+
+          <input type="file"  onChange={(e)=> setAvatar(e.target.files[0])}/>
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}

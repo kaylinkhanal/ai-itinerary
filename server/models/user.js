@@ -6,9 +6,10 @@ const userSchema = new Schema({
   name: { type: String, required: true },
   password: { type: String, required: true },
   phoneNumber: { type: String },
-  role : { type: String, enum: ['user', 'admin'], default: 'user' }
+  role : { type: String, enum: ['user', 'admin'], default: 'user' },
+  avatar: { type: String },
 });
 
 const User = mongoose.model('User', userSchema);
 
-module.exports = User; // Change from export default
+module.exports = User; // Change from export default 
