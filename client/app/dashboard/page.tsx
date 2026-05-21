@@ -28,6 +28,8 @@ interface Activity {
   location: string;
   description: string;
   is_off_beaten_path: boolean;
+  locationType?: string;
+  coordinates?: { lat: number; lng: number };
 }
 
 interface DayPlan {
@@ -49,6 +51,12 @@ interface ItineraryData {
   itinerary: DayPlan[];
 }
 
+interface LoggedInUser {
+  _id?: string;
+  name?: string;
+  avatar?: string;
+}
+
 const timeSlotIcon = (slot: string) => {
   const s = slot.toLowerCase();
   if (s.includes("morning") || s.includes("sunrise")) return <Sunrise className="w-4 h-4" />;
@@ -58,6 +66,7 @@ const timeSlotIcon = (slot: string) => {
 };
 
 const ItineraryView = ({ data }: { data: ItineraryData }) =>{
+  debugger;
 
    data = JSON.parse(data)
    console.log("data is" , data)
@@ -150,10 +159,24 @@ const InputDemo = () => {
   const [conversations, setConversations] = useState([])
   const [selectedChatId, setSelectedChatId] = useState('')
   const [error, setError] = useState("");
-    const user = localStorage.getItem("user")
+  const [loggedinDetails, setLoggedinDetails] = useState<LoggedInUser | null>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setLoggedinDetails(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse user data from localStorage", e);
+      }
+    }
+  }, []);
+
+
   const handleClick = async () => {
     if (!promptInput.trim()) return;
-    setConversations([...conversations, { role: "user", text: promptInput }]);
+    debugger;
+    setConversations([...conversations, { sender: "user", userPrompt: promptInput }]);
     setLoading(true);
     setError("");
     try {
@@ -164,8 +187,9 @@ const InputDemo = () => {
       });
       const parsed: ItineraryData = JSON.parse(data.text);
 
-      setConversations( prev =>  [...prev, { role: "assistant", text: data.text }])
+      setConversations( prev =>  [...prev, { sender: "AI", AIresponse: data.text }])
       setItinerary(parsed);
+      if(data)  setLoading(false);
     } catch {
       setError("Failed to generate itinerary. Please try again.");
     } finally {
@@ -178,12 +202,12 @@ const InputDemo = () => {
   };
 
   const getAllChatTitles = async() => {
-    const {data}  = await axios.get("http://localhost:8000/chats?userId=" + JSON.parse(user)._id)
+    const {data}  = await axios.get("http://localhost:8000/chats?userId=" + loggedinDetails?._id)
     setChatList(data)
   }
 
   const addNewChat = async() => {
-    const {data}  = await axios.post("http://localhost:8000/newchat?userid=" + JSON.parse(user)._id)
+    const {data}  = await axios.post("http://localhost:8000/newchat?userid=" + loggedinDetails?._id)
     getAllChatTitles()
   }
 
@@ -197,21 +221,24 @@ const InputDemo = () => {
 
   const getUserChatByConversation = async() => {
     const {data}  = await axios.get("http://localhost:8000/chats/" + selectedChatId)
-    setConversations(JSON.stringify(data))
+    setConversations(data)
     console.log(data)
   }
 
   useEffect(()=>{
-    getAllChatTitles()
-    getUserChatByConversation()
-  },[selectedChatId])
+    if(loggedinDetails?._id){
+      getAllChatTitles()
+      getUserChatByConversation()
+    }
+  },[selectedChatId, loggedinDetails?._id])
 
-  const userName = JSON.parse(localStorage.getItem("user"))
+
+
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-slate-50">
       {/* Sidebar */}
-      <div className="w-56 shrink-0 bg-gray-900 p-4 flex flex-col gap-4">
+      <div className="w-56 shrink-0 bg-gray-950 p-4 flex flex-col gap-4">
         <Image
           src="/ai itenary.png"
           alt="AI Itinerary Logo"
@@ -221,8 +248,10 @@ const InputDemo = () => {
         />
         <Separator className="bg-gray-700" />
         <div className="text-lg font-bold text-white truncate">
-        {userName?.name}
-
+        {loggedinDetails?.name}
+        <img src={'http://localhost:8000/uploads/' + loggedinDetails?.avatar} alt="avatar" width={30} height={30} className="w-8 h-8 rounded-full inline-block ml-2" />
+      
+  
         </div>
         <Button onClick={addNewChat }> <Plus/> Start new chat </Button>
         {chatList.length> 0 ? chatList.map((item,id)=>{
@@ -242,7 +271,7 @@ const InputDemo = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-col flex-1 min-w-0">
+      <div className="flex flex-col flex-1 min-w-0 bg-white">
         <ScrollArea className="flex-1">
           {!itinerary && !loading && (
             <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-center px-8">
@@ -268,19 +297,22 @@ const InputDemo = () => {
           {conversations.length > 0 && (
             <div className="p-4 space-y-3">
 
-              {JSON.parse(conversations).length> 0 && JSON.parse(conversations)?.map((item)=>{
+               {conversations.length> 0 && conversations.map((item, id)=>{
+          
+                if(item?.sender) return <div key={`message-${id}`}>{item?.userPrompt}</div>
                 return (
                   <div key={item._id}>
-                    {item.messages.map((conv, i) => (
+                    {item.messages.map((conv, i) => {
+                      return (
                 <div key={i} className={`flex items-start gap-3 ${conv.sender === "user" ? "justify-end" : ""}`}>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white ${conv.sender === "user" ? "bg-blue-500" : "bg-gray-500"}`}>
                     {conv.sender === "user" ? <SendIcon className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
                   </div>
-                  <p className={`px-3 py-2 rounded-lg ${conv.sender === "user" ? "bg-blue-100 text-blue-800" : "text-gray-800"}`}>
-                    {conv?.sender === "user" ?  conv?.userPrompt : <ItineraryView data={conv.userPrompt} />}
-                  </p>
+                  <div className={`px-3 py-2 rounded-lg ${conv.sender === "user" ? "bg-blue-100 text-blue-800" : "text-gray-800"}`}>
+                    {conv?.sender === "user" ?  conv?.userPrompt : <ItineraryView data={conv?.userPrompt || conv?.AIresponse } />}
+                  </div>
                 </div>
-              ))} 
+              )})} 
                   </div>
                 )
               })}
@@ -306,12 +338,14 @@ const InputDemo = () => {
       </div>
 
       {/* Map Panel */}
-      <div className="w-72 shrink-0 border-l relative overflow-hidden">
+      <div className="hidden lg:block w-[42vw] min-w-[480px] max-w-[680px] shrink-0 border-l border-slate-200 bg-slate-100 p-3">
+        <div className="h-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <MapPanel
           itinerary ={itinerary}
           center={itinerary?.accommodation?.coordinates}
           label={itinerary?.accommodation?.name}
         />
+        </div>
       </div>
     </div>
   );

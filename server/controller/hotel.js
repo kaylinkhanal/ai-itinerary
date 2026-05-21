@@ -22,8 +22,13 @@ const deleteHotel = async (req, res) => {
   res.send('Hotel details deleted')
 }
 
+const reserveHotel = async (req, res) => {
+  const hotel = await Hotel.findOne({name: req.body.location})
+  console.log(hotel)
+}
 
 
-export  { registerNewHotel, getHotels,deleteHotel,updateHotelDetails }
+
+export  { registerNewHotel, getHotels,deleteHotel,updateHotelDetails,reserveHotel }
 
 

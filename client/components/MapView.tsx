@@ -4,7 +4,8 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import { useEffect } from "react";
-import { MapPin } from "lucide-react";
+import { MapPin, Navigation, Route } from "lucide-react";
+import axios from "axios";
 
 // Fix default marker icons broken by webpack
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
@@ -33,7 +34,7 @@ const national_parkIcon = new L.Icon({ iconUrl: 'national-park.svg', iconSize: [
 const airportIcon = new L.Icon({ iconUrl: 'plane.svg', iconSize: [25, 41] });
 const museumIcon = new L.Icon({ iconUrl: 'museum.svg', iconSize: [25, 41] });
 
-const getMarkerIcon = (type) => {
+const getMarkerIcon = (type?: string) => {
   if (!type) return defaultIcon;
   
   // Convert to lowercase so "Temple" and "temple" both work
@@ -43,6 +44,7 @@ const getMarkerIcon = (type) => {
   if (t.includes("temple") || t.includes("monastery") || t.includes("spiritual")) return templeIcon;
   if (t.includes("hotel") || t.includes("resort") || t.includes("stay")) return hotelIcon;
   if (t.includes("mountain") || t.includes("hill") || t.includes("viewpoint")) return mountainIcon;
+  if (t.includes("national")) return national_parkIcon;
   if (t.includes("park") || t.includes("garden")) return parkIcon;
   if (t.includes("waterfall")) return waterfallIcon;
   if (t.includes("cave")) return caveIcon;
@@ -69,20 +71,63 @@ function Recenter({ lat, lng }: { lat: number; lng: number }) {
 interface MapViewProps {
   center?: { lat: number; lng: number };
   label?: string;
+  itinerary?: {
+    destination?: string;
+    itinerary?: {
+      day: number;
+      theme?: string;
+      activities?: {
+        location: string;
+        description: string;
+        locationType?: string;
+        coordinates?: { lat: number; lng: number };
+      }[];
+    }[];
+  } | null;
 }
 
 
 export default function MapView({ center, label,itinerary }: MapViewProps) {
   const defaultCenter: [number, number] = [20, 0];
   const zoom = center ? 13 : 2;
-  console.log(itinerary)
+  const activities =
+    itinerary?.itinerary?.flatMap((day) =>
+      day.activities?.filter((item) => item.coordinates?.lat && item.coordinates?.lng) ?? []
+    ) ?? [];
+
+    const reserveHotel =async (location) => {
+      const {data} = await axios.post(process.env.NEXT_PUBLIC_API_URL + "/reserve-hotel", { location });
+      if(data.success){
+        alert(`Hotel at ${location} reserved successfully!`);
+      } else {
+        alert(`Failed to reserve hotel at ${location}. Please try again.`);
+      }
+    }
+
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="relative h-full w-full overflow-hidden bg-slate-100">
+      <div className="absolute left-4 right-4 top-4 z-[500] rounded-lg border border-white/70 bg-white/90 p-4 shadow-lg shadow-slate-900/10 backdrop-blur">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Travel map</p>
+            <h2 className="truncate text-lg font-semibold text-slate-950">
+              {itinerary?.destination || label || "Your itinerary route"}
+            </h2>
+          </div>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500">
+            <Navigation className="h-5 w-5" />
+          </div>
+        </div>
+        <div className="mt-3 flex items-center gap-2 text-sm text-slate-600">
+          <Route className="h-4 w-4 text-slate-400" />
+          <span>{activities.length ? `${activities.length} mapped stops` : "Ready for mapped stops"}</span>
+        </div>
+      </div>
       {!center && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-400 z-10 pointer-events-none">
-          <MapPin className="w-8 h-8" />
-          <p className="text-sm font-medium">Map view</p>
-          <p className="text-xs text-center px-4">Generate an itinerary to see the map</p>
+        <div className="absolute inset-x-6 top-1/2 z-[500] flex -translate-y-1/2 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white/85 p-6 text-slate-500 shadow-sm backdrop-blur pointer-events-none">
+          <MapPin className="h-8 w-8 text-rose-400" />
+          <p className="text-sm font-semibold text-slate-700">Map view</p>
+          <p className="max-w-56 text-center text-xs">Generate an itinerary to see hotels, sights, and daily stops here.</p>
         </div>
       )}
       <MapContainer
@@ -95,13 +140,16 @@ export default function MapView({ center, label,itinerary }: MapViewProps) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        {center && <Recenter lat={center.lat} lng={center.lng} />}
         {itinerary && itinerary?.itinerary?.map((activity, i) => {
          return   activity.activities?.map((item,id) => {
+          if (!item.coordinates?.lat || !item.coordinates?.lng) return null;
             return (
-              <Marker  icon={getMarkerIcon(item.locationType)}  key={id} position={[item.coordinates.lat, item.coordinates.lng]}>
+              <Marker  icon={getMarkerIcon(item.locationType)}  key={`${i}-${id}`} position={[item.coordinates.lat, item.coordinates.lng]}>
                 <Popup>
                   <strong>{item.location}</strong>
                   <p>{item.description}</p>
+                  {item?.locationType === 'hotel' && <button onClick={()=>reserveHotel(item.location)} className='bg-green-200'>Reserve now</button>}
                 </Popup>
               </Marker>
             )

@@ -6,7 +6,7 @@ const chat = require('../models/chat');
 const router = express.Router()
 
 const ai = new GoogleGenAI({ 
-  apiKey: "AIzaSyDEcJWy5StVZ1SHPIIQAR9YsWsy1nZA1wU"
+  apiKey: process.env.GEMINI_API_KEY
 });
 
 router.post('/generate', async (req, res) => {

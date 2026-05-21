@@ -28,7 +28,7 @@ const verifyUser= (req, res, next)=> {
     res.status(401).send('Unauthorized')
    }
 }
-router.get('/users', verifyUser, getAllUsers)
+router.get('/users',  getAllUsers)
 router.get('/users/:id', getUserDetailsById)
 router.post('/newchat', addNewChatByUserId)
 router.get('/chats', getAllChatsByUserId)
